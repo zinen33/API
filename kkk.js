@@ -1,59 +1,66 @@
 const axios = require('axios');
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
 const app = express();
 
 // إعداد نقطة الوصول للصفحة الرئيسية
 app.get('/', (req, res) => {
-  res.send('Welcome to the Background Removal API!');
+  res.send('Welcome to the GPT API!');
 });
 
-// إعداد نقطة الوصول لتحميل الصورة وإزالة الخلفية
-app.get('/remove-background', async (req, res) => {
-  const imageUrl = req.query.url;
+// إعداد نقطة الوصول لتحويل الطلب إلى API GPT
+app.get('/chat', async (req, res) => {
+  const userMessage = req.query.message;
 
-  if (!imageUrl) {
-    return res.status(400).json({ error: 'Image URL is required' });
+  if (!userMessage) {
+    return res.status(400).json({ error: 'Message is required' });
   }
 
   try {
-    // إعداد تفاصيل الطلب لتحميل الصورة
+    // إعداد تفاصيل الطلب إلى API GPT
     const options = {
-      method: 'GET',
-      url: imageUrl,
+      method: 'POST',
+      url: 'https://gpt-4o7.p.rapidapi.com/v1/chat/completions',
       headers: {
-        Referer: 'https://www.artguru.ai/',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        'x-rapidapi-key': '51083dedb4msh27fc01414fc162ap1ee379jsn6cf475608f46',
+        'x-rapidapi-host': 'gpt-4o7.p.rapidapi.com',
+        'Content-Type': 'application/json'
       },
-      responseType: 'arraybuffer', // لتحميل الصورة كـ buffer
+      data: {
+        messages: [
+          {
+            role: 'system',
+            content: 'u r a helpful assistant that always output in json.'
+          },
+          {
+            role: 'user',
+            content: userMessage
+          }
+        ],
+        response_format: {
+          type: 'json_object'
+        },
+        store: true,
+        temperature: 1,
+        max_tokens: 2048,
+        top_p: 1,
+        frequency_penalty: 0,
+        presence_penalty: 0
+      }
     };
 
-    // إرسال الطلب لتحميل الصورة
+    // إرسال الطلب إلى GPT API
     const response = await axios.request(options);
-
-    // حفظ الصورة المأخوذة من الرابط
-    const filePath = path.join(__dirname, 'downloaded_image.webp');
-    fs.writeFileSync(filePath, response.data);
-
-    // الرد مع صورة تم تحميلها
-    res.status(200).sendFile(filePath, (err) => {
-      if (err) {
-        console.error('Error sending file:', err);
-        res.status(500).json({ error: 'Failed to send the file' });
-      } else {
-        // بعد إرسال الصورة، يمكن حذفها من الخادم (اختياري)
-        fs.unlinkSync(filePath);
-      }
-    });
+    
+    // الرد مع البيانات المستلمة من GPT API
+    res.status(200).json(response.data);
   } catch (error) {
-    console.error('Error fetching image:', error);
-    res.status(500).json({ error: 'Failed to fetch image from URL' });
+    console.error('Error fetching data from GPT API:', error);
+    res.status(500).json({ error: 'Failed to fetch data from GPT API' });
   }
 });
 
-// التحقق من البيئة والمنفذ
-const PORT = process.env.PORT || 3000;
+// تشغيل الخادم
+const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
