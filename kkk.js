@@ -1,10 +1,14 @@
 const axios = require('axios');
 const express = require('express');
+const path = require('path');
 const app = express();
+
+// إعداد مسار لتقديم ملفات HTML
+app.use(express.static(path.join(__dirname, 'public')));
 
 // إعداد نقطة الوصول للصفحة الرئيسية
 app.get('/', (req, res) => {
-  res.send('Welcome to the GPT API!');
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // إعداد نقطة الوصول لتحويل الطلب إلى API GPT
