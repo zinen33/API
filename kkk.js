@@ -1,42 +1,34 @@
-const axios = require("axios").default;
-const express = require("express");
+const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
-const app = express();
 
-app.use(express.json());
+// رابط الصورة
+const imageUrl =
+  "https://wxtechhk.oss-cn-hongkong.aliyuncs.com/tasks/output/visual_image_watermarking/e5e7914b-7c7d-4c35-a476-a69b4de685a1.png?x-oss-credential=LTAI5tGjJnh66c1txANiRBQN/20241213/cn-hongkong/oss/aliyun_v4_request&x-oss-date=20241213T092349Z&x-oss-expires=3600&x-oss-signature=138ede21da5e67b2c1771c5c29715fc3353d1a341aa8921ef41be52cd85f6498&x-oss-signature-version=OSS4-HMAC-SHA256";
 
-app.get("/api", async (req, res) => {
-  const imageUrl = "https://wxtechhk.oss-cn-hongkong.aliyuncs.com/tasks/output/visual_image_watermarking/8e7fe3cb-b274-46e6-82e0-e39d6ef4de06.png?x-oss-credential=LTAI5tGjJnh66c1txANiRBQN/20241213/cn-hongkong/oss/aliyun_v4_request&x-oss-date=20241213T080612Z&x-oss-expires=3600&x-oss-signature=f4fa774f5200485ef0276bfe5f6e5f4fe86e0a9828ec0c47ce1797dbd6f7f345&x-oss-signature-version=OSS4-HMAC-SHA256";
-  const imagePath = path.join(__dirname, "downloaded_image.png");
+// مسار حفظ الصورة
+const imagePath = path.join(__dirname, "downloaded_image.png");
 
+(async () => {
   try {
-    const imageResponse = await axios({
+    const response = await axios({
       method: "GET",
       url: imageUrl,
       responseType: "stream",
     });
 
+    // كتابة الصورة إلى ملف محلي
     const writer = fs.createWriteStream(imagePath);
-
-    imageResponse.data.pipe(writer);
+    response.data.pipe(writer);
 
     writer.on("finish", () => {
-      console.log("Image downloaded successfully");
-      res.send("Image downloaded successfully");
+      console.log("تم تحميل الصورة بنجاح!");
     });
 
     writer.on("error", (err) => {
-      console.error("Error downloading the image", err);
-      res.status(500).send("Error downloading the image");
+      console.error("حدث خطأ أثناء حفظ الصورة:", err);
     });
   } catch (error) {
-    console.error("Error making the request", error);
-    res.status(500).send("Error making the request");
+    console.error("حدث خطأ أثناء تحميل الصورة:", error.message);
   }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server started on port ${PORT}`);
-});
+})();
